@@ -1,0 +1,11 @@
+services:
+  database:
+    container_name: 'mysql' # nama container
+    image: mysql:8.0.29
+    build:
+      context: .
+    ports:
+      - '3306:3306' # port yang dibuka ke local
+    environment:
+      MYSQL_ROOT_PASSWORD: root # password root
+      MYSQL_DATABASE: library # nama database

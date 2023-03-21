@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENTS
+  LECTURERS
+  ADMIN
+}
+
+model User {
+  id String @id
+  email String @unique
+  password String
+  role UserRole
+  name String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  BookingOrder BookingOrder[]
+}
+
+model Faculty {
+  id String @id
+  name String @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Books Books[]
+}
+
+model Category {
+  id String @id
+  name String @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  BookCategory BookCategory[]
+}
+
+model Books {
+  id String @id
+  name String
+  author String
+  description String
+  facultyId String
+  faculty Faculty @relation(fields: [facultyId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  BookCategory BookCategory[]
+  BookingOrder BookingOrder[]
+}
+
+enum BookingStatus {
+  AVAILABLE
+  ONBOOKING
+  BORROWED
+}
+
+model BookCategory {
+  id String @id
+  bookId String
+  categoryId String
+  status BookingStatus
+  book Books @relation(fields: [bookId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BookingOrder {
+  id String @id
+  bookId String
+  userId String  
+  book Books @relation(fields: [bookId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+  startAt DateTime @default(now())
+  endAt DateTime
+}
