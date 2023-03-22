@@ -3,6 +3,7 @@ import prisma from '../utils/database.js';
 import authMiddleware from '../middleware/auth.js';
 import { body, validationResult } from "express-validator";
 import { UserRole } from '@prisma/client';
+import { Faculty } from '../model/faculty.js';
 
 const facultyRouter = express.Router();
 
@@ -50,22 +51,20 @@ facultyRouter.post("/api/faculty",
 
         // check if faculty alread exist
         const statusExist = await checkIfFacultyExist(id, name, res)
-        console.log(statusExist)
         if (!statusExist) {
             return
         }
 
-        const faculty = await prisma.faculty.create({
-            data: {
-                id: id,
-                name: name
-            }
+        const faculty = new Faculty(id, name)
+
+        const result = await prisma.faculty.create({
+            data: faculty.forInsertPrisma()
         })
 
         res.json({
             code: 201,
             message: "Success create faculty",
-            data: faculty
+            data: result
         })
     })
 

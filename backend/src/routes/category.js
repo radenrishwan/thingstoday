@@ -4,6 +4,7 @@ import authMiddleware from '../middleware/auth.js';
 import { v4 as uuidv4 } from 'uuid';
 import { body, validationResult } from "express-validator";
 import { UserRole } from '@prisma/client';
+import { Category } from '../model/category.js';
 
 const categoryRouter = express.Router();
 
@@ -54,17 +55,16 @@ categoryRouter.post("/api/category",
             return
         }
 
-        const category = await prisma.category.create({
-            data: {
-                id: uuidv4(),
-                name: name
-            }
+        const category = new Category(uuidv4(), name)
+
+        const result = await prisma.category.create({
+            data: category.forInsertPrisma()
         })
 
         res.json({
             code: 200,
             message: "Success create category",
-            data: category
+            data: result
         })
     })
 
