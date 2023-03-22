@@ -5,6 +5,7 @@ import { generateToken } from '../utils/jwt.js';
 import { body, validationResult } from "express-validator";
 import { User } from '../model/user.js';
 import { v4 as uuidv4 } from 'uuid'
+import { checkValidationRequest } from "../utils/auth.js";
 
 const userRouter = express.Router();
 
@@ -20,19 +21,8 @@ userRouter.post('/api/user/register',
         return true
     }),
     async (req, res) => {
-        const err = validationResult(req)
-        if (!err.isEmpty()) {
-            res.json({
-                code: 400,
-                message: "Bad request",
-                data: err.array().map((e) => {
-                    return {
-                        field: e.param,
-                        message: e.msg
-                    }
-                })
-            })
-
+        const valid = checkValidationRequest(req, res)
+        if (!valid) {
             return
         }
 
@@ -49,6 +39,7 @@ userRouter.post('/api/user/register',
         })
 
         if (old > 0) {
+            res.status(400)
             res.json({
                 code: 400,
                 message: "Email or name already exist",
@@ -75,6 +66,7 @@ userRouter.post('/api/user/register',
                 data: data.forInsertPrisma()
             })
 
+            res.status(201)
             res.json({
                 code: 201,
                 message: "User created successfully",
@@ -118,6 +110,7 @@ userRouter.post('/api/user/login',
         })
 
         if (user === null) {
+            res.status(404)
             res.json({
                 code: 404,
                 message: "Email does not exist",
@@ -131,6 +124,7 @@ userRouter.post('/api/user/login',
         const match = await bcrypt.compare(password, user.password)
 
         if (!match) {
+            res.status(400)
             res.json({
                 code: 400,
                 message: "Password is incorrect",
@@ -143,6 +137,7 @@ userRouter.post('/api/user/login',
         // create token
         const token = generateToken(user)
 
+        res.status(200)
         res.json({
             code: 200,
             message: "User login successfully",

@@ -1,9 +1,9 @@
 import express from 'express';
 import prisma from '../utils/database.js';
 import authMiddleware from '../middleware/auth.js';
-import { body, validationResult } from "express-validator";
-import { UserRole } from '@prisma/client';
+import { body } from "express-validator";
 import { Faculty } from '../model/faculty.js';
+import { checkRoles, checkValidationRequest } from "../utils/auth.js";
 
 const facultyRouter = express.Router();
 
@@ -12,6 +12,7 @@ facultyRouter.use(authMiddleware)
 facultyRouter.get("/api/faculty", async (req, res) => {
     const faculty = await prisma.faculty.findMany()
 
+    res.status(200)
     res.json({
         code: 200,
         message: "Success get faculty",
@@ -23,19 +24,8 @@ facultyRouter.post("/api/faculty",
     body("id").notEmpty().withMessage("ID is required"),
     body("name").notEmpty().withMessage("Name is required"),
     async (req, res) => {
-        const err = validationResult(req)
-        if (!err.isEmpty()) {
-            res.json({
-                code: 400,
-                message: "Bad request",
-                data: err.array().map((e) => {
-                    return {
-                        field: e.param,
-                        message: e.msg
-                    }
-                })
-            })
-
+        const valid = checkValidationRequest(req, res)
+        if (!valid) {
             return
         }
 
@@ -49,7 +39,7 @@ facultyRouter.post("/api/faculty",
 
         const { id, name } = req.body
 
-        // check if faculty alread exist
+        // check if faculty already exist
         const statusExist = await checkIfFacultyExist(id, name, res)
         if (!statusExist) {
             return
@@ -61,6 +51,7 @@ facultyRouter.post("/api/faculty",
             data: faculty.forInsertPrisma()
         })
 
+        res.status(201)
         res.json({
             code: 201,
             message: "Success create faculty",
@@ -72,19 +63,8 @@ facultyRouter.put("/api/faculty",
     body("id").notEmpty().withMessage("ID is required"),
     body("name").notEmpty().withMessage("Name is required"),
     async (req, res) => {
-        const err = validationResult(req)
-        if (!err.isEmpty()) {
-            res.json({
-                code: 400,
-                message: "Bad request",
-                data: err.array().map((e) => {
-                    return {
-                        field: e.param,
-                        message: e.msg
-                    }
-                })
-            })
-
+        const valid = checkValidationRequest(req, res)
+        if (!valid) {
             return
         }
 
@@ -106,6 +86,7 @@ facultyRouter.put("/api/faculty",
         })
 
         if (old === null) {
+            res.status(404)
             res.json({
                 code: 404,
                 message: "Faculty does not exist",
@@ -114,6 +95,24 @@ facultyRouter.put("/api/faculty",
 
             return
         }
+
+        const existNew = await prisma.faculty.findFirst({
+            where: {
+                name: name,
+            }
+        })
+
+        if (existNew !== null) {
+            res.status(400)
+            res.json({
+                code: 400,
+                message: "Faculty with new name already exist",
+                data: null
+            })
+
+            return
+        }
+
 
         const faculty = await prisma.faculty.update({
             where: {
@@ -124,6 +123,7 @@ facultyRouter.put("/api/faculty",
             }
         })
 
+        res.status(200)
         res.json({
             code: 200,
             message: "Success update faculty",
@@ -132,35 +132,6 @@ facultyRouter.put("/api/faculty",
     })
 
 
-const checkRoles = async (res, id) => {
-    const user = await prisma.user.findFirst({
-        where: {
-            id: id
-        }
-    })
-
-    if (user === null) {
-        res.json({
-            code: 403,
-            message: "You didnt have access to this resource or user not found",
-            data: null
-        })
-
-        return false
-    }
-
-    if (user.role !== UserRole.ADMIN) {
-        res.json({
-            code: 403,
-            message: "You didnt have access to this resource",
-            data: null
-        })
-
-        return false
-    }
-
-    return true
-}
 
 const checkIfFacultyExist = async (id, name, res) => {
     const old = await prisma.faculty.count({
@@ -173,6 +144,7 @@ const checkIfFacultyExist = async (id, name, res) => {
     })
 
     if (old > 0) {
+        res.status(400)
         res.json({
             code: 400,
             message: "ID or Name already exist",

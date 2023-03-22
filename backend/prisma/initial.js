@@ -5,6 +5,7 @@ const prisma = new PrismaClient()
 
 async function main() {
     await prisma.faculty.createMany({
+        skipDuplicates: true,
         data: [
             {
                 id: "FASILKOM",
@@ -18,8 +19,8 @@ async function main() {
     })
 
     await prisma.category.createMany({
+        skipDuplicates: true,
         data: [
-
             {
                 id: uuidv4(),
                 name: "Fiksi"
@@ -29,6 +30,11 @@ async function main() {
                 name: "Non Fiksi"
             }
         ]
+    })
+
+    await prisma.books.createMany({
+        skipDuplicates: true,
+        data: []
     })
 }
 
