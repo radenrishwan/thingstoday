@@ -1,11 +1,12 @@
 import jwt from 'jsonwebtoken';
 
-const generateToken = ({ name, email }) => {
+const generateToken = ({ name, email, id }) => {
     const token = jwt.sign({
+        id: id,
         name: name,
         email: email,
     }, process.env.SECRET_KEY, {
-        expiresIn: 60 * 60,
+        expiresIn: '7 days',
         algorithm: 'HS256'
     }) 
 

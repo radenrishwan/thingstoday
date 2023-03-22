@@ -41,7 +41,7 @@ facultyRouter.post("/api/faculty",
         // check if role admins
         const decoded = res.locals.decoded
 
-        const status = await checkRoles(res, decoded.email)
+        const status = await checkRoles(res, decoded.id)
         if (!status) {
             return
         }
@@ -63,7 +63,7 @@ facultyRouter.post("/api/faculty",
         })
 
         res.json({
-            code: 200,
+            code: 201,
             message: "Success create faculty",
             data: faculty
         })
@@ -92,7 +92,7 @@ facultyRouter.put("/api/faculty",
         // check if role admins
         const decoded = res.locals.decoded
 
-        const status = await checkRoles(res, decoded.email)
+        const status = await checkRoles(res, decoded.id)
         if (!status) {
             return
         }
@@ -133,17 +133,17 @@ facultyRouter.put("/api/faculty",
     })
 
 
-const checkRoles = async (res, email) => {
+const checkRoles = async (res, id) => {
     const user = await prisma.user.findFirst({
         where: {
-            email: email
+            id: id
         }
     })
 
     if (user === null) {
         res.json({
-            code: 404,
-            message: "Email does not exist",
+            code: 403,
+            message: "You didnt have access to this resource or user not found",
             data: null
         })
 

@@ -4,12 +4,11 @@ import { saltRounds, bcrypt } from '../utils/password.js';
 import { generateToken } from '../utils/jwt.js';
 import { body, validationResult } from "express-validator";
 import { User } from '../model/user.js';
-
+import { v4 as uuidv4 } from 'uuid'
 
 const userRouter = express.Router();
 
 userRouter.post('/api/user/register',
-    body('id').notEmpty().isLength({ min: 8}).withMessage("Id is required"),
     body('name').notEmpty().withMessage('Name is required'),
     body('email').notEmpty().isEmail().withMessage('Email is required'),
     body('password').notEmpty().isLength({ min: 8 }).withMessage("Password is required or minimum 8 characters"),
@@ -37,7 +36,7 @@ userRouter.post('/api/user/register',
             return
         }
 
-        const { id, name, email, password, role } = req.body;
+        const { name, email, password, role } = req.body;
 
         // check if email or name already exist
         const old = await prisma.user.count({
@@ -65,8 +64,8 @@ userRouter.post('/api/user/register',
         // create user
         bcrypt.hash(password, saltRounds, async (err, hash) => {
             const data = new User(
-                id,
-                name, 
+                uuidv4(),
+                name,
                 email,
                 hash,
                 role,
@@ -77,10 +76,10 @@ userRouter.post('/api/user/register',
             })
 
             res.json({
-                code: 200,
+                code: 201,
                 message: "User created successfully",
                 data: {
-                    id: id,
+                    id: user.id,
                     name: user.name,
                     email: user.email,
                     token: token
@@ -148,6 +147,7 @@ userRouter.post('/api/user/login',
             code: 200,
             message: "User login successfully",
             data: {
+                id: user.id,
                 name: user.name,
                 email: user.email,
                 token: token
