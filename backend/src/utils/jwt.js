@@ -5,6 +5,7 @@ const generateToken = ({ name, email, id }) => {
         id: id,
         name: name,
         email: email,
+        sign_in_provider: "thinstoday.com"
     }, process.env.SECRET_KEY, {
         expiresIn: '7 days',
         algorithm: 'HS256'
